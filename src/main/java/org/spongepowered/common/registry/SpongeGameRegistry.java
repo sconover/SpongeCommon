@@ -29,6 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -606,6 +607,15 @@ public abstract class SpongeGameRegistry implements GameRegistry {
             id = "minecraft:" + id;
         }
         return com.google.common.base.Optional.fromNullable((EntityType) this.entityIdToTypeMappings.get(id));
+    }
+
+    public Optional<EntityType> getEntity(Class<? extends org.spongepowered.api.entity.Entity> entityClass) {
+        for(EntityType type : this.entityTypeMappings.values()) {
+            if(entityClass.isAssignableFrom(type.getEntityClass())) {
+                return Optional.of(type);
+            }
+        }
+        return Optional.absent();
     }
 
     public com.google.common.base.Optional<BiomeType> getBiome(String id) {

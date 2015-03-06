@@ -24,11 +24,15 @@
  */
 package org.spongepowered.common.mixin.core.entity.living.monster;
 
+import com.flowpowered.math.vector.Vector3d;
 import net.minecraft.entity.monster.EntitySkeleton;
 import org.spongepowered.api.data.manipulator.entity.SkeletonData;
 import org.spongepowered.api.entity.living.monster.Skeleton;
+import org.spongepowered.api.entity.projectile.Projectile;
+import org.spongepowered.api.entity.projectile.source.ProjectileSource;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.common.util.SpongeHooks;
 
 @NonnullByDefault
 @Mixin(EntitySkeleton.class)
@@ -38,4 +42,19 @@ public abstract class MixinEntitySkeleton extends MixinEntityMob implements Skel
     public SkeletonData getSkeletonData() {
         return getData(SkeletonData.class).get();
     }
+
+    @Override
+    public <T extends Projectile> T launchProjectile(Class<T> projectileClass) {
+        return launchProjectile(projectileClass, null);
+    }
+
+    @Override
+    public <T extends Projectile> T launchProjectile(Class<T> projectileClass, Vector3d velocity) {
+        double x = this.posX ;
+        double y = getEntityBoundingBox().minY + (double)(this.height / 3.0F) - this.posY;
+        double z = this.posZ;
+
+        return (T) SpongeHooks.launchProjectile(getEntityWorld(), new Vector3d(x, y, z), ((ProjectileSource) this), projectileClass, velocity);
+    }
+
 }
