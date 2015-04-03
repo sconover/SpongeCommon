@@ -35,7 +35,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.S07PacketRespawn;
 import net.minecraft.network.play.server.S08PacketPlayerPosLook;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.WorldServer;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.MemoryDataContainer;
@@ -120,8 +119,6 @@ public abstract class MixinEntity implements Entity, IMixinEntity {
     @Shadow protected abstract void setAlwaysRenderNameTag(boolean visible);
     @Shadow(prefix = "shadow$")
     protected abstract void shadow$setRotation(float yaw, float pitch);
-    @Shadow public abstract AxisAlignedBB getEntityBoundingBox();
-    @Shadow public abstract net.minecraft.world.World getEntityWorld();
 
 
     // @formatter:on

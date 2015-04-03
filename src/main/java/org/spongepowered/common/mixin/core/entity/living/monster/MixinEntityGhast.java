@@ -24,32 +24,17 @@
  */
 package org.spongepowered.common.mixin.core.entity.living.monster;
 
-import com.flowpowered.math.vector.Vector3d;
 import net.minecraft.entity.monster.EntityGhast;
 import org.spongepowered.api.entity.living.monster.Ghast;
-import org.spongepowered.api.entity.projectile.Projectile;
-import org.spongepowered.api.entity.projectile.source.ProjectileSource;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.common.mixin.core.entity.living.MixinEntityLiving;
-import org.spongepowered.common.util.SpongeHooks;
 
 @NonnullByDefault
 @Mixin(EntityGhast.class)
 @Implements(@Interface(iface = Ghast.class, prefix = "ghast$"))
 public abstract class MixinEntityGhast extends MixinEntityLiving {
 
-    public <T extends Projectile> T launchProjectile(Class<T> projectileClass) {
-        return launchProjectile(projectileClass, null);
-    }
-
-    public <T extends Projectile> T launchProjectile(Class<T> projectileClass, Vector3d velocity) {
-        double x = this.posX ;
-        double y = getEntityBoundingBox().minY + (double)(this.height / 2.0F);
-        double z = this.posZ;
-
-        return (T) SpongeHooks.launchProjectile(getEntityWorld(), new Vector3d(x, y, z), ((ProjectileSource) this), projectileClass, velocity);
-    }
 }

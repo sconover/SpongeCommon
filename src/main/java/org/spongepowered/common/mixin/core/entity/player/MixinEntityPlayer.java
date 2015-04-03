@@ -24,7 +24,6 @@
  */
 package org.spongepowered.common.mixin.core.entity.player;
 
-import com.flowpowered.math.vector.Vector3d;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.PlayerCapabilities;
@@ -32,14 +31,11 @@ import net.minecraft.inventory.Container;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.FoodStats;
 import net.minecraft.util.IChatComponent;
-import org.spongepowered.api.entity.projectile.Projectile;
-import org.spongepowered.api.entity.projectile.source.ProjectileSource;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.interfaces.IMixinEntityPlayer;
 import org.spongepowered.common.mixin.core.entity.living.MixinEntityLivingBase;
-import org.spongepowered.common.util.SpongeHooks;
 
 @NonnullByDefault
 @Mixin(EntityPlayer.class)
@@ -131,17 +127,4 @@ public abstract class MixinEntityPlayer extends MixinEntityLivingBase implements
     public void setFlying(boolean flying) {
         this.capabilities.isFlying = flying;
     }
-
-    public <T extends Projectile> T launchProjectile(Class<T> projectileClass) {
-        return launchProjectile(projectileClass, null);
-    }
-
-    public <T extends Projectile> T launchProjectile(Class<T> projectileClass, Vector3d velocity) {
-        double x = this.posX ;
-        double y = getEntityBoundingBox().minY + (double)(this.height / 3.0F) - this.posY;
-        double z = this.posZ;
-
-        return (T) SpongeHooks.launchProjectile(getEntityWorld(), new Vector3d(x, y, z), ((ProjectileSource) this), projectileClass, velocity);
-    }
-
 }

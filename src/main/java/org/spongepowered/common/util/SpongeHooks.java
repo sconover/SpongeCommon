@@ -330,10 +330,10 @@ public class SpongeHooks {
         }
     }
 
-    public static Projectile launchProjectile(World world, Vector3d position, ProjectileSource source, Class<? extends Projectile> projectileClass, @Nullable Vector3d velocity) {
-
+    public static <T extends Projectile> T  launchProjectile(World world, Vector3d position, ProjectileSource source, Class<T> projectileClass, @Nullable Vector3d velocity) {
         try {
-            Projectile entity = (Projectile) ConstructorUtils.invokeConstructor(Sponge.getSpongeRegistry().getEntity(projectileClass).get().getEntityClass(), world);
+            @SuppressWarnings("unchecked")
+            T entity = (T) ConstructorUtils.invokeConstructor(Sponge.getSpongeRegistry().getEntity(projectileClass).get().getEntityClass(), world);
             entity.setLocation(entity.getLocation().setPosition(position));
             entity.setShooter(source);
             if(velocity != null) {
