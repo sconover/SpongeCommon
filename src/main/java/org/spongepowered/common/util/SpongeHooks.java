@@ -42,6 +42,8 @@ import net.minecraft.world.gen.ChunkProviderServer;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.common.Sponge;
 import org.spongepowered.common.configuration.SpongeConfig;
+import org.spongepowered.common.configuration.SpongeConfig.DimensionConfig;
+import org.spongepowered.common.configuration.SpongeConfig.WorldConfig;
 import org.spongepowered.common.interfaces.IMixinWorld;
 import org.spongepowered.common.interfaces.IMixinWorldProvider;
 
@@ -284,15 +286,30 @@ public class SpongeHooks {
     }
 
     public static SpongeConfig<?> getActiveConfig(World world) {
-        SpongeConfig<?> config = ((IMixinWorld) world).getWorldConfig();
-        if (config.getConfig().isConfigEnabled()) {
-            return config;
-        } else if (((IMixinWorldProvider) world.provider).getDimensionConfig() != null && ((IMixinWorldProvider) world.provider)
-                .getDimensionConfig().getConfig().isConfigEnabled()) {
-            return ((IMixinWorldProvider) world.provider).getDimensionConfig();
-        } else {
-            return Sponge.getGlobalConfig();
+        if (world != null) {
+            if (((IMixinWorld) world).getWorldConfig().getConfig().isConfigEnabled()) {
+                return ((IMixinWorld) world).getWorldConfig();
+            } else if (((IMixinWorldProvider) world.provider).getDimensionConfig() != null && ((IMixinWorldProvider) world.provider)
+                    .getDimensionConfig().getConfig().isConfigEnabled()) {
+                return ((IMixinWorldProvider) world.provider).getDimensionConfig();
+            } 
         }
+        return Sponge.getGlobalConfig();
+    }
+
+    public static SpongeConfig<?> getActiveConfig(String dimFolder, String worldFolder) {
+        File configFile = new File(Sponge.getConfigDirectory(), dimFolder + File.separator + worldFolder + File.separator + "world.conf");
+        File configFile2 = new File(Sponge.getConfigDirectory(), dimFolder + File.separator + "dimension.conf");
+        SpongeConfig<WorldConfig> worldConfig = new SpongeConfig(SpongeConfig.Type.WORLD, configFile, Sponge.ECOSYSTEM_NAME);
+        SpongeConfig<DimensionConfig> dimConfig = new SpongeConfig(SpongeConfig.Type.DIMENSION, configFile2, Sponge.ECOSYSTEM_NAME);
+        if (worldConfig != null && dimConfig != null) {
+            if (worldConfig.getConfig().isConfigEnabled()) {
+                return worldConfig;
+            } else if (dimConfig.getConfig().isConfigEnabled()) {
+                return dimConfig;
+            } 
+        }
+        return Sponge.getGlobalConfig();
     }
 
     public static void setBlockState(World world, int x, int y, int z, BlockState state) {

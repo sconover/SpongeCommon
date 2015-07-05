@@ -96,7 +96,7 @@ import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.util.PositionOutOfBoundsException;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.world.Chunk;
-import org.spongepowered.api.world.Dimension;
+import org.spongepowered.api.world.DimensionType;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 import org.spongepowered.api.world.WorldBorder;
@@ -517,8 +517,8 @@ public abstract class MixinWorld implements World, IMixinWorld {
     }
 
     @Override
-    public Dimension getDimension() {
-        return (Dimension) this.provider;
+    public DimensionType getDimension() {
+        return (DimensionType) this.provider;
     }
 
     @Override

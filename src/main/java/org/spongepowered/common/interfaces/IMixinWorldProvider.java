@@ -32,10 +32,6 @@ public interface IMixinWorldProvider {
 
     String getSaveFolder();
 
-    void setDimension(int dim);
-
-    void setDimensionConfig(SpongeConfig<SpongeConfig.DimensionConfig> config);
-
     SpongeConfig<SpongeConfig.DimensionConfig> getDimensionConfig();
 
     int getAverageGroundLevel();
@@ -43,4 +39,12 @@ public interface IMixinWorldProvider {
     BlockPos getRandomizedSpawnPoint();
 
     int getRespawnDimension(EntityPlayerMP playerIn);
+
+    String getId();
+
+    void setId(String id);
+
+    void setTypeId(int dim);
+
+    void setDimensionConfig(SpongeConfig<SpongeConfig.DimensionConfig> config);
 }

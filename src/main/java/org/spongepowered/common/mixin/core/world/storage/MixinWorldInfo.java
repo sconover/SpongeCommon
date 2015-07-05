@@ -24,7 +24,6 @@
  */
 package org.spongepowered.common.mixin.core.world.storage;
 
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.flowpowered.math.vector.Vector3i;
@@ -64,6 +63,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.Sponge;
+import org.spongepowered.common.configuration.SpongeConfig;
+import org.spongepowered.common.configuration.SpongeConfig.WorldConfig;
 import org.spongepowered.common.interfaces.IMixinWorldInfo;
 import org.spongepowered.common.service.persistence.NbtTranslator;
 import org.spongepowered.common.world.gen.WorldGeneratorRegistry;
@@ -78,13 +79,11 @@ import java.util.UUID;
 public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo {
 
     private UUID uuid;
-    private boolean worldEnabled;
     private DimensionType dimensionType;
-    private boolean loadOnStartup;
-    private boolean keepSpawnLoaded;
     private ImmutableCollection<String> generatorModifiers;
     private NBTTagCompound spongeRootLevelNbt;
     private NBTTagCompound spongeNbt;
+    private SpongeConfig<WorldConfig> worldConfig;
 
     @Shadow private long randomSeed;
     @Shadow private net.minecraft.world.WorldType terrainType;
@@ -126,7 +125,6 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Inject(method = "<init>", at = @At("RETURN"))
     public void onConstruction(CallbackInfo ci) {
-        this.worldEnabled = true;
         this.spongeRootLevelNbt = new NBTTagCompound();
         this.spongeNbt = new NBTTagCompound();
         this.spongeRootLevelNbt.setTag(Sponge.ECOSYSTEM_NAME, this.spongeNbt);
@@ -134,7 +132,6 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Inject(method = "<init>*", at = @At("RETURN"))
     public void onConstruction(WorldSettings settings, String name, CallbackInfo ci) {
-        this.worldEnabled = true;
         this.spongeRootLevelNbt = new NBTTagCompound();
         this.spongeNbt = new NBTTagCompound();
         this.spongeRootLevelNbt.setTag(Sponge.ECOSYSTEM_NAME, this.spongeNbt);
@@ -146,7 +143,6 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Inject(method = "<init>*", at = @At("RETURN"))
     public void onConstruction(NBTTagCompound nbt, CallbackInfo ci) {
-        this.worldEnabled = true;
         this.spongeRootLevelNbt = new NBTTagCompound();
         this.spongeNbt = new NBTTagCompound();
         this.spongeRootLevelNbt.setTag(Sponge.ECOSYSTEM_NAME, this.spongeNbt);
@@ -362,32 +358,32 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public boolean isEnabled() {
-        return this.worldEnabled;
+        return this.worldConfig.getConfig().getWorld().isWorldEnabled();
     }
 
     @Override
     public void setEnabled(boolean state) {
-        this.worldEnabled = state;
+        this.worldConfig.getConfig().getWorld().setWorldEnabled(state);
     }
 
     @Override
     public boolean loadOnStartup() {
-        return this.loadOnStartup;
+        return this.worldConfig.getConfig().getWorld().getLoadOnStartup();
     }
 
     @Override
     public void setLoadOnStartup(boolean state) {
-        this.loadOnStartup = state;
+        this.worldConfig.getConfig().getWorld().setLoadOnStartup(state);
     }
 
     @Override
     public boolean doesKeepSpawnLoaded() {
-        return this.keepSpawnLoaded;
+        return this.worldConfig.getConfig().getWorld().getKeepLoaded();
     }
 
     @Override
     public void setKeepSpawnLoaded(boolean state) {
-        this.keepSpawnLoaded = state;
+        this.worldConfig.getConfig().getWorld().setKeepLoaded(state);
     }
 
     @Override
@@ -454,11 +450,8 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
     public void readSpongeNbt(NBTTagCompound nbt) {
         this.dimension = nbt.getInteger("dimensionId");
         this.uuid = new UUID(nbt.getLong("uuid_most"), nbt.getLong("uuid_least"));
-        this.worldEnabled = nbt.getBoolean("enabled");
-        this.keepSpawnLoaded = nbt.getBoolean("keepSpawnLoaded");
-        this.loadOnStartup = nbt.getBoolean("loadOnStartup");
-        for (DimensionType type : Sponge.getSpongeRegistry().dimensionClassMappings.values()) {
-            if (type.getDimensionClass().getCanonicalName().equalsIgnoreCase(nbt.getString("dimensionType"))) {
+        for (DimensionType type : Sponge.getSpongeRegistry().getDimensionTypes()) {
+            if (type.getId().equalsIgnoreCase(nbt.getString("dimensionType"))) {
                 this.dimensionType = type;
             }
         }
@@ -495,15 +488,12 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
         }
         this.spongeNbt.setInteger("dimensionId", this.dimension);
         if (this.dimensionType != null) {
-            this.spongeNbt.setString("dimensionType", this.dimensionType.getDimensionClass().getName());
+            this.spongeNbt.setString("dimensionType", this.dimensionType.getId());
         }
         if (this.uuid != null) {
             this.spongeNbt.setLong("uuid_most", this.uuid.getMostSignificantBits());
             this.spongeNbt.setLong("uuid_least", this.uuid.getLeastSignificantBits());
         }
-        this.spongeNbt.setBoolean("enabled", this.worldEnabled);
-        this.spongeNbt.setBoolean("keepSpawnLoaded", this.keepSpawnLoaded);
-        this.spongeNbt.setBoolean("loadOnStartup", this.loadOnStartup);
 
         if (this.generatorModifiers != null) {
             NBTTagList generatorModifierNbt = new NBTTagList();
@@ -512,5 +502,15 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
             }
             this.spongeNbt.setTag("generatorModifiers", generatorModifierNbt);
         }
+    }
+
+    @Override
+    public SpongeConfig<WorldConfig> getWorldConfig() {
+        return this.worldConfig;
+    }
+
+    @Override
+    public void setWorldConfig(SpongeConfig<WorldConfig> config) {
+        this.worldConfig = config;
     }
 }

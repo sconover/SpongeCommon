@@ -66,7 +66,7 @@ import org.spongepowered.api.entity.player.Player;
 import org.spongepowered.api.event.entity.player.PlayerJoinEvent;
 import org.spongepowered.api.event.entity.player.PlayerRespawnEvent;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
-import org.spongepowered.api.world.Dimension;
+import org.spongepowered.api.world.DimensionType;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -333,13 +333,13 @@ public abstract class MixinServerConfigurationManager {
         if (targetWorld == null) { // Target world doesn't exist? Use global
             return ((World) this.mcServer.getEntityWorld()).getSpawnLocation();
         }
-        Dimension targetDim = (Dimension) targetWorld.provider;
+        DimensionType targetDim = (DimensionType) targetWorld.provider;
         // Cannot respawn in requested world, use the fallback dimension for
         // that world. (Usually overworld unless a mod says otherwise).
         if (!targetDim.allowsPlayerRespawns()) {
             targetDimension = ((IMixinWorldProvider) targetDim).getRespawnDimension(playerIn);
             targetWorld = this.mcServer.worldServerForDimension(targetDimension);
-            targetDim = (Dimension) targetWorld.provider;
+            targetDim = (DimensionType) targetWorld.provider;
         }
         // Use data attached to the player if possible
         Optional<RespawnLocationData> optRespawn = ((Player) playerIn).getData(RespawnLocationData.class);

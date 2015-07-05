@@ -70,7 +70,6 @@ import org.spongepowered.common.interfaces.IMixinWorld;
 import org.spongepowered.common.interfaces.IMixinWorldProvider;
 import org.spongepowered.common.util.SpongeHooks;
 import org.spongepowered.common.world.DimensionManager;
-import org.spongepowered.common.world.SpongeDimensionType;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -136,7 +135,7 @@ public class CommandSponge {
             }
             if (args.hasAny("dimension")) {
                 for (DimensionType dimension : args.<DimensionType>getAll("dimension")) {
-                    WorldProvider provider = DimensionManager.getWorldFromDimId(((SpongeDimensionType) dimension).getDimensionTypeId()).provider;
+                    WorldProvider provider = (WorldProvider) dimension;
                     src.sendMessage(Texts.of("Dimension ", dimension.getName(), ": ", processDimension(((IMixinWorldProvider) provider)
                                     .getDimensionConfig(), dimension, src, args)));
                     ++successes;

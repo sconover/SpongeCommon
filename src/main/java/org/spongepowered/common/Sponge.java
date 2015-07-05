@@ -29,6 +29,8 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.spongepowered.common.configuration.SpongeConfig.Type.GLOBAL;
 
 import com.google.inject.Injector;
+import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.nbt.NBTTagCompound;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -37,6 +39,7 @@ import org.spongepowered.common.launch.SpongeLaunch;
 import org.spongepowered.common.registry.SpongeGameRegistry;
 
 import java.io.File;
+import java.io.FileInputStream;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -124,6 +127,21 @@ public class Sponge {
         }
 
         return globalConfig;
+    }
+
+    public static NBTTagCompound getSpongeWorldNBT(File worldDirectory) {
+        NBTTagCompound nbt;
+        final File spongeFile = new File(worldDirectory, "level_sponge.dat");
+        try {
+            nbt = CompressedStreamTools.readCompressed(new FileInputStream(spongeFile));
+            if (nbt.hasKey(Sponge.ECOSYSTEM_NAME)) {
+                NBTTagCompound spongeData = nbt.getCompoundTag(Sponge.ECOSYSTEM_NAME);
+                return spongeData;
+            }
+        } catch (Throwable t) {
+            Sponge.getLogger().info("Could not locate level_sponge.dat in directory " + worldDirectory.getAbsolutePath(), t);
+        }
+        return null;
     }
 
 }

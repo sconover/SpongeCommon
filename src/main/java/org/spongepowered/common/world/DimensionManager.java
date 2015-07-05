@@ -42,10 +42,11 @@ import net.minecraft.world.WorldServerMulti;
 import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.SaveHandler;
 import org.apache.logging.log4j.Level;
-import org.spongepowered.api.world.Dimension;
+import org.spongepowered.api.world.DimensionType;
 import org.spongepowered.api.world.DimensionTypes;
 import org.spongepowered.common.Sponge;
 import org.spongepowered.common.event.SpongeImplEventFactory;
+import org.spongepowered.common.interfaces.IMixinDimensionManager;
 import org.spongepowered.common.interfaces.IMixinEntityPlayerMP;
 import org.spongepowered.common.interfaces.IMixinMinecraftServer;
 import org.spongepowered.common.interfaces.IMixinWorldProvider;
@@ -57,7 +58,7 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
-public class DimensionManager {
+public class DimensionManager implements IMixinDimensionManager {
 
     public static final Hashtable<Integer, Class<? extends WorldProvider>> providers = new Hashtable<Integer, Class<? extends WorldProvider>>();
     public static final Hashtable<Integer, Boolean> spawnSettings = new Hashtable<Integer, Boolean>();
@@ -101,7 +102,7 @@ public class DimensionManager {
                 worldType = "OVERWORLD";
                 break;
             case 1:
-                worldType = "END";
+                worldType = "THE_END";
                 break;
             default: // modded
                 worldType = provider.getSimpleName().toLowerCase();
@@ -109,10 +110,14 @@ public class DimensionManager {
                 worldType = worldType.replace("provider", "");
         }
 
-        Sponge.getSpongeRegistry().registerDimensionType(new SpongeDimensionType(worldType, keepLoaded, provider, id));
         providers.put(id, provider);
         spawnSettings.put(id, keepLoaded);
         return true;
+    }
+
+    @Override
+    public Boolean getSpawnSettings(int dim) {
+        return spawnSettings.get(dim);
     }
 
     public static int getProviderType(int dim) {
@@ -126,7 +131,7 @@ public class DimensionManager {
         try {
             if (dimensions.containsKey(dim)) {
                 WorldProvider provider = providers.get(getProviderType(dim)).newInstance();
-                ((IMixinWorldProvider) provider).setDimension(dim);
+                ((IMixinWorldProvider) provider).setTypeId(dim);
                 return provider;
             } else {
                 throw new RuntimeException(String.format("No WorldProvider bound for dimension %d", dim));
@@ -298,9 +303,9 @@ public class DimensionManager {
 
     public static int getClientDimensionToSend(int dim, WorldServer worldserver, EntityPlayerMP playerIn) {
         if (!((IMixinEntityPlayerMP) playerIn).usesCustomClient()) {
-            if (((Dimension) worldserver.provider).getType().equals(DimensionTypes.NETHER)) {
+            if (((DimensionType) worldserver.provider).equals(DimensionTypes.NETHER)) {
                 dim = -1;
-            } else if (((Dimension) worldserver.provider).getType().equals(DimensionTypes.END)) {
+            } else if (((DimensionType) worldserver.provider).equals(DimensionTypes.THE_END)) {
                 dim = 1;
             } else {
                 dim = 0;

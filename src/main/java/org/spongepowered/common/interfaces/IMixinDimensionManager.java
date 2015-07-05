@@ -24,36 +24,7 @@
  */
 package org.spongepowered.common.interfaces;
 
-import net.minecraft.nbt.NBTTagCompound;
-import org.spongepowered.api.world.DimensionType;
-import org.spongepowered.common.configuration.SpongeConfig;
-import org.spongepowered.common.configuration.SpongeConfig.WorldConfig;
+public interface IMixinDimensionManager {
 
-import java.util.UUID;
-
-public interface IMixinWorldInfo {
-
-    NBTTagCompound getSpongeRootLevelNbt();
-
-    NBTTagCompound getSpongeNbt();
-
-    int getDimensionId();
-
-    SpongeConfig<WorldConfig> getWorldConfig();
-
-    void setDimensionId(int id);;
-
-    void setSpongeRootLevelNBT(NBTTagCompound nbt);
-
-    void setUUID(UUID uuid);
-
-    void setDimensionType(DimensionType type);
-
-    void setSeed(long seed);
-
-    void setWorldName(String name);
-
-    void setWorldConfig(SpongeConfig<WorldConfig> config);
-
-    void readSpongeNbt(NBTTagCompound spongeNbt);
+    Boolean getSpawnSettings(int dim);
 }

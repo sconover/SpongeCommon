@@ -24,6 +24,7 @@
  */
 package org.spongepowered.common.mixin.core.world;
 
+import com.google.common.base.Objects;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
@@ -31,8 +32,8 @@ import net.minecraft.world.WorldProvider;
 import net.minecraft.world.WorldType;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
-import org.spongepowered.api.world.Dimension;
 import org.spongepowered.api.world.DimensionType;
+import org.spongepowered.api.world.DimensionTypes;
 import org.spongepowered.api.world.GeneratorTypes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -50,11 +51,12 @@ import javax.annotation.Nullable;
 
 @NonnullByDefault
 @Mixin(WorldProvider.class)
-public abstract class MixinWorldProvider implements Dimension, IMixinWorldProvider {
+public abstract class MixinWorldProvider implements DimensionType, IMixinWorldProvider {
 
     private boolean allowPlayerRespawns;
     private SpongeConfig<SpongeConfig.DimensionConfig> dimensionConfig;
     private volatile Context dimContext;
+    private String id;
 
     @Shadow protected World worldObj;
     @Shadow protected int dimensionId;
@@ -62,10 +64,23 @@ public abstract class MixinWorldProvider implements Dimension, IMixinWorldProvid
     @Shadow public WorldType terrainType;
     @Shadow protected boolean hasNoSky;
     @Shadow public abstract String getDimensionName();
+    @Shadow public abstract boolean canRespawnHere();
 
     @Override
     public String getName() {
         return getDimensionName();
+    }
+
+    @Override
+    public String getId() {
+        if (this.id == null) {
+            this.id = getDimensionName().toLowerCase().replace(" ", "_").replace("[^A-Za-z0-9_]", "");
+        }
+        return this.id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     @Override
@@ -84,7 +99,7 @@ public abstract class MixinWorldProvider implements Dimension, IMixinWorldProvid
     }
 
     public boolean canCoordinateBeSpawn(int x, int z) {
-        if (this.terrainType.equals(GeneratorTypes.END)) {
+        if (this.terrainType.equals(GeneratorTypes.THE_END)) {
             return this.worldObj.getGroundAboveSeaLevel(new BlockPos(x, 0, z)).getMaterial().blocksMovement();
         }
         else {
@@ -113,7 +128,7 @@ public abstract class MixinWorldProvider implements Dimension, IMixinWorldProvid
 
     @Override
     public DimensionType getType() {
-        return ((SpongeGameRegistry) Sponge.getGame().getRegistry()).dimensionClassMappings.get(this.getClass());
+        return (DimensionType) this;
     }
 
     @Override
@@ -123,7 +138,7 @@ public abstract class MixinWorldProvider implements Dimension, IMixinWorldProvid
     }
 
     @Override
-    public void setDimension(int dim) {
+    public void setTypeId(int dim) {
         this.dimensionId = dim;
     }
 
@@ -151,25 +166,68 @@ public abstract class MixinWorldProvider implements Dimension, IMixinWorldProvid
         if (((IMixinWorldProvider) provider).getDimensionConfig() == null) {
             SpongeConfig<SpongeConfig.DimensionConfig> dimConfig = SpongeGameRegistry.dimensionConfigs.get(provider.getClass());
             if (dimConfig == null) {
-                String providerName = provider.getDimensionName().toLowerCase().replace(" ", "_").replace("[^A-Za-z0-9_]", "");
+                String id = ((IMixinWorldProvider) provider).getId();
                 dimConfig = new SpongeConfig<SpongeConfig.DimensionConfig>(SpongeConfig.Type.DIMENSION, new File(Sponge.getConfigDirectory()
-                        + File.separator + "worlds" + File.separator + providerName + File.separator, "dimension.conf"), "sponge");
+                        + File.separator + id + File.separator, "dimension.conf"), "sponge");
                 SpongeGameRegistry.dimensionConfigs.put(provider.getClass(), dimConfig);
+                ((IMixinWorldProvider) provider).setId(id);
             }
             ((IMixinWorldProvider) provider).setDimensionConfig(SpongeGameRegistry.dimensionConfigs.get(provider.getClass()));
         }
 
-        Dimension dim = (Dimension) provider;
-        dim.setAllowsPlayerRespawns(provider.canRespawnHere());
+        DimensionType type = (DimensionType) provider;
+        Sponge.getSpongeRegistry().registerDimensionType(type);
+        type.setAllowsPlayerRespawns(provider.canRespawnHere());
+        try {
+            if (dimension == -1) {
+                DimensionTypes.class.getDeclaredField("NETHER").set(null, provider);
+            } else if (dimension == 0) {
+                DimensionTypes.class.getDeclaredField("OVERWORLD").set(null, provider);
+            } else if (dimension == 1) {
+                DimensionTypes.class.getDeclaredField("THE_END").set(null, provider);
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
         return provider;
     }
 
     @Override
     public int getAverageGroundLevel() {
-        if (this.terrainType.equals(GeneratorTypes.END)) {
+        if (this.terrainType.equals(GeneratorTypes.THE_END)) {
             return 50;
         } else {
             return ((IMixinWorldType) this.terrainType).getMinimumSpawnHeight(this.worldObj);
         }
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this)
+                .add("id", this.id)
+                .add("typeId", this.dimensionId)
+                .toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof DimensionType)) {
+            return false;
+        }
+
+        DimensionType other = (DimensionType) obj;
+        if (!this.id.equals(other.getId())) {
+            return false;
+        }
+        if (!(this.dimensionId == ((WorldProvider) other).getDimensionId())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode(); // todo this is a warning
     }
 }

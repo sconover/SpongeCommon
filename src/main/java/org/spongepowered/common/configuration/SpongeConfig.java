@@ -55,6 +55,7 @@ public class SpongeConfig<T extends SpongeConfig.ConfigBase> {
         }
     }
 
+    // BASE
     public static final String CONFIG_ENABLED = "config-enabled";
 
     // DEBUG
@@ -94,6 +95,9 @@ public class SpongeConfig<T extends SpongeConfig.ConfigBase> {
     public static final String MODULE_ENTITY_ACTIVATION_RANGE = "entity-activation-range";
 
     // WORLD
+    public static final String WORLD_ENABLED = "world-enabled";
+    public static final String WORLD_KEEP_LOADED = "keep-loaded";
+    public static final String WORLD_LOAD_ON_STARTUP = "load-on-startup";
     public static final String WORLD_INFINITE_WATER_SOURCE = "infinite-water-source";
     public static final String WORLD_FLOWING_LAVA_DECAY = "flowing-lava-decay";
 
@@ -112,7 +116,7 @@ public class SpongeConfig<T extends SpongeConfig.ConfigBase> {
     private ObjectMapper<T>.BoundInstance configMapper;
     private T configBase;
     private String modId;
-    private String configName;
+    private String name;
     @SuppressWarnings("unused")
     private File file;
 
@@ -134,9 +138,9 @@ public class SpongeConfig<T extends SpongeConfig.ConfigBase> {
 
             this.loader = HoconConfigurationLoader.builder().setFile(file).build();
             if (type == Type.GLOBAL) {
-                this.configName = "GLOBAL";
+                this.name = "GLOBAL";
             } else {
-                this.configName = file.getParentFile().getName().toUpperCase();
+                this.name = file.getParentFile().getName().toUpperCase();
             }
 
             this.configMapper = (ObjectMapper.BoundInstance) ObjectMapper.forClass(this.type.type).bindToNew();
@@ -192,7 +196,7 @@ public class SpongeConfig<T extends SpongeConfig.ConfigBase> {
     }
 
     public String getConfigName() {
-        return this.configName;
+        return this.name;
     }
 
     public Type getType() {
@@ -609,10 +613,40 @@ public class SpongeConfig<T extends SpongeConfig.ConfigBase> {
     @ConfigSerializable
     public static class WorldCategory extends Category {
 
+        @Setting(value = WORLD_ENABLED, comment = "If disabled, any attempts to load world will be ignored.")
+        private boolean worldEnabled = true;
+        @Setting(value = WORLD_KEEP_LOADED, comment = "Enable to prevent worlds based on config type from being unloaded.")
+        private Boolean keepLoaded;
+        @Setting(value = WORLD_LOAD_ON_STARTUP, comment = "Enable to prevent worlds based on config type from being loaded at startup.")
+        private boolean loadOnStartup = true;
         @Setting(value = WORLD_INFINITE_WATER_SOURCE, comment = "Vanilla water source behavior - is infinite")
         private boolean infiniteWaterSource = false;
         @Setting(value = WORLD_FLOWING_LAVA_DECAY, comment = "Lava behaves like vanilla water when source block is removed")
         private boolean flowingLavaDecay = false;
+
+        public boolean isWorldEnabled() {
+            return this.worldEnabled;
+        }
+
+        public void setWorldEnabled(boolean enable) {
+            this.worldEnabled = enable;
+        }
+
+        public Boolean getKeepLoaded() {
+            return this.keepLoaded;
+        }
+
+        public void setKeepLoaded(boolean keepLoaded) {
+            this.keepLoaded = keepLoaded;
+        }
+
+        public void setLoadOnStartup(boolean loadOnStartup) {
+            this.loadOnStartup = loadOnStartup;
+        }
+
+        public boolean getLoadOnStartup() {
+            return this.loadOnStartup;
+        }
 
         public boolean hasInfiniteWaterSource() {
             return this.infiniteWaterSource;
