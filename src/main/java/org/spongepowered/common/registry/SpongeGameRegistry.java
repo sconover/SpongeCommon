@@ -113,6 +113,7 @@ import org.spongepowered.api.data.manipulator.entity.HealthData;
 import org.spongepowered.api.data.manipulator.entity.InvulnerabilityData;
 import org.spongepowered.api.data.manipulator.entity.SkinData;
 import org.spongepowered.api.data.manipulator.entity.TradeOfferData;
+import org.spongepowered.api.data.manipulator.entity.VelocityData;
 import org.spongepowered.api.data.manipulator.item.AuthorData;
 import org.spongepowered.api.data.manipulator.item.EnchantmentData;
 import org.spongepowered.api.data.manipulator.item.LoreData;
@@ -298,6 +299,7 @@ import org.spongepowered.common.data.manipulator.entity.SpongeGameModeData;
 import org.spongepowered.common.data.manipulator.entity.SpongeHealthData;
 import org.spongepowered.common.data.manipulator.entity.SpongeInvulnerabilityData;
 import org.spongepowered.common.data.manipulator.entity.SpongeSkinData;
+import org.spongepowered.common.data.manipulator.entity.SpongeVelocityData;
 import org.spongepowered.common.data.manipulator.item.SpongeAuthorData;
 import org.spongepowered.common.data.manipulator.item.SpongeEnchantmentItemData;
 import org.spongepowered.common.data.manipulator.item.SpongeLoreData;
@@ -326,6 +328,7 @@ import org.spongepowered.common.data.processor.entity.SpongeHealthProcessor;
 import org.spongepowered.common.data.processor.entity.SpongeInvulnerabilityProcessor;
 import org.spongepowered.common.data.processor.entity.SpongeSkinDataProcessor;
 import org.spongepowered.common.data.processor.entity.SpongeTradeOfferProcessor;
+import org.spongepowered.common.data.processor.entity.SpongeVelocityProcessor;
 import org.spongepowered.common.data.processor.item.SpongeAuthorProcessor;
 import org.spongepowered.common.data.processor.item.SpongeEnchantmentProcessor;
 import org.spongepowered.common.data.processor.item.SpongeLoreProcessor;
@@ -635,6 +638,9 @@ public abstract class SpongeGameRegistry implements GameRegistry {
     public <T extends CatalogType> com.google.common.base.Optional<T> getType(Class<T> typeClass, String id) {
         Map<String, ? extends CatalogType> tempMap = this.catalogTypeMap.get(checkNotNull(typeClass, "null type class"));
         if (tempMap == null) {
+            if (typeClass == EntityType.class) {
+                return (Optional<T>) getEntity(id);
+            }
             return com.google.common.base.Optional.absent();
         } else {
             T type = (T) tempMap.get(id);
@@ -1750,6 +1756,10 @@ public abstract class SpongeGameRegistry implements GameRegistry {
         service.registerBuilder(GameModeData.class, gameModeProcessor);
         dataRegistry.register(GameModeData.class, gameModeProcessor);
         dataRegistry.registerDataProcessorAndImpl(GameModeData.class, SpongeGameModeData.class, gameModeProcessor);
+
+        SpongeVelocityProcessor velProc = new SpongeVelocityProcessor();
+        dataRegistry.register(VelocityData.class, velProc);
+        dataRegistry.registerDataProcessorAndImpl(VelocityData.class, SpongeVelocityData.class, velProc);
         // User
         // TODO someone needs to write a User implementation...
     }

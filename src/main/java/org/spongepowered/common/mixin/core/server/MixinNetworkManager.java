@@ -25,6 +25,7 @@
 package org.spongepowered.common.mixin.core.server;
 
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.local.LocalAddress;
 import net.minecraft.network.NetworkManager;
 import org.spongepowered.api.MinecraftVersion;
 import org.spongepowered.asm.mixin.Mixin;
@@ -47,7 +48,11 @@ public abstract class MixinNetworkManager extends SimpleChannelInboundHandler im
 
     @Override
     public InetSocketAddress getAddress() {
-        return (InetSocketAddress) getRemoteAddress();
+        SocketAddress remoteAddress = getRemoteAddress();
+        if (remoteAddress.equals(LocalAddress.ANY)) {
+            return InetSocketAddress.createUnresolved("127.0.0.1", 0);
+        }
+        return (InetSocketAddress) remoteAddress;
     }
 
     @Override
