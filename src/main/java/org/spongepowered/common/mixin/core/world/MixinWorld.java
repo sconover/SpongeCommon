@@ -40,7 +40,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityHanging;
 import net.minecraft.entity.boss.EntityDragonPart;
 import net.minecraft.entity.effect.EntityLightningBolt;
-import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.item.EntityEnderPearl;
 import net.minecraft.entity.item.EntityFallingBlock;
 import net.minecraft.entity.item.EntityItem;
@@ -58,6 +57,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.IBlockAccess;
@@ -129,6 +129,7 @@ import org.spongepowered.common.interfaces.IMixinWorldType;
 import org.spongepowered.common.interfaces.block.IMixinBlock;
 import org.spongepowered.common.registry.SpongeGameRegistry;
 import org.spongepowered.common.scoreboard.SpongeScoreboard;
+import org.spongepowered.common.util.PlayerSimulatorFactory;
 import org.spongepowered.common.util.SpongeHooks;
 import org.spongepowered.common.util.VecHelper;
 import org.spongepowered.common.world.DimensionManager;
@@ -356,8 +357,8 @@ public abstract class MixinWorld implements World, IMixinWorld {
         if (entityClass.isAssignableFrom(EntityLightningBolt.class)) {
             entity = (Entity) new EntityLightningBolt(world, x, y, z);
         } else if (entityClass.isAssignableFrom(EntityEnderPearl.class)) {
-            EntityArmorStand tempEntity = new EntityArmorStand(world, x, y, z);
-            entity = (Entity) new EntityEnderPearl(world, tempEntity);
+            EntityPlayerMP thrower = PlayerSimulatorFactory.instance.getSimulator((WorldServer) world).at(x, y, z).getPlayer();
+            entity = (Entity) new EntityEnderPearl(world, thrower);
             ((EnderPearl) entity).setShooter(ProjectileSource.UNKNOWN);
         }
 
@@ -865,6 +866,48 @@ public abstract class MixinWorld implements World, IMixinWorld {
         for (Player player : getPlayers()) {
             player.clearTitle();
         }
+    }
+
+    @Override
+    public void interactBlock(int x, int y, int z, Direction side) {
+        interactBlockWith(x, y, z, null, side);
+    }
+
+    @Override
+    public void interactBlockWith(int x, int y, int z, org.spongepowered.api.item.inventory.ItemStack itemStack, Direction side) {
+        checkArgument(side.isCardinal() || side.isUpright(), "Direction must be a valid block face");
+        EntityPlayerMP player = PlayerSimulatorFactory.instance.getSimulator((WorldServer) (Object) this)
+                .at(x, y, z).holdStack((ItemStack) itemStack).getPlayer();
+        EnumFacing facing = SpongeGameRegistry.directionMap.get(side);
+        player.theItemInWorldManager.activateBlockOrUseItem(player, player.worldObj, (ItemStack) itemStack, new BlockPos(x, y, z), facing, 0, 0, 0);
+    }
+
+    @Override
+    public boolean digBlock(int x, int y, int z) {
+        return digBlockWith(x, y, z, null);
+    }
+
+    @Override
+    public boolean digBlockWith(int x, int y, int z, org.spongepowered.api.item.inventory.ItemStack itemStack) {
+        return PlayerSimulatorFactory.instance.getSimulator((WorldServer) (Object) this)
+                .at(x, y, z).holdStack((ItemStack) itemStack)
+                .getPlayer().theItemInWorldManager.tryHarvestBlock(new BlockPos(x, y, z));
+    }
+
+    @Override
+    public int getBlockDigTime(int x, int y, int z) {
+        return getBlockDigTimeWith(x, y, z, null);
+    }
+
+    @Override
+    public int getBlockDigTimeWith(int x, int y, int z, org.spongepowered.api.item.inventory.ItemStack itemStack) {
+        EntityPlayerMP player = PlayerSimulatorFactory.instance.getSimulator((WorldServer) (Object) this)
+                .holdStack((ItemStack) itemStack).getPlayer();
+        BlockPos pos = new BlockPos(x, y, z);
+        // A value from 0.0 to 1.0 representing the percentage of the block
+        // broken in one tick. We return the inverse.
+        float percentagePerTick = this.getBlockState(pos).getBlock().getPlayerRelativeBlockHardness(player, (WorldServer) (Object) this, pos);
+        return MathHelper.ceiling_float_int(1 / percentagePerTick);
     }
 
     @Override
