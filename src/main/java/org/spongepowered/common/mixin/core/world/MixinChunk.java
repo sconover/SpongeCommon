@@ -30,6 +30,8 @@ import com.flowpowered.math.vector.Vector2i;
 import com.flowpowered.math.vector.Vector3i;
 import com.google.common.base.Optional;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockLever;
+import net.minecraft.block.BlockRedstoneWire;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.BlockPos;
 import net.minecraft.world.ChunkCoordIntPair;
@@ -44,15 +46,22 @@ import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.data.DataManipulator;
 import org.spongepowered.api.data.DataPriority;
 import org.spongepowered.api.data.DataTransactionResult;
+import org.spongepowered.api.event.SpongeEventFactory;
+import org.spongepowered.api.event.block.BlockRedstoneUpdateEvent;
 import org.spongepowered.api.util.PositionOutOfBoundsException;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.world.Chunk;
+import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.biome.BiomeType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import org.spongepowered.common.Sponge;
 import org.spongepowered.common.data.SpongeBlockProcessor;
 import org.spongepowered.common.data.SpongeManipulatorRegistry;
 import org.spongepowered.common.interfaces.block.IMixinBlock;
@@ -61,6 +70,7 @@ import org.spongepowered.common.util.VecHelper;
 import org.spongepowered.common.world.storage.SpongeChunkLayout;
 
 import java.util.Collection;
+import java.util.Collections;
 
 @NonnullByDefault
 @Mixin(net.minecraft.world.chunk.Chunk.class)
@@ -290,5 +300,34 @@ public abstract class MixinChunk implements Chunk {
     public float getTemperature(int x, int y, int z) {
         BlockPos pos = new BlockPos(x, y, z);
         return getBiome(pos, this.worldObj.getWorldChunkManager()).getFloatTemperature(pos);
+    }
+
+    @Inject(method = "setBlockState", at = @At(value = "INVOKE_ASSIGN", target = "net.minecraft.world.chunk.Chunk.getBlockState"
+            + "(Lnet/minecraft/util/BlockPos;)Lnet/minecraft/block/state/IBlockState;"), locals = LocalCapture.CAPTURE_FAILHARD)
+    public void callEventsBlockUpdate(BlockPos pos, IBlockState newState, CallbackInfo ci, int x, int y, int z, int xzArrayIndex, int columnHeight,
+            IBlockState oldState) {
+        if (newState.getBlock().equals(oldState.getBlock())) {
+            final Location spongeLoc = new Location(getWorld(), pos.getX(), pos.getY(), pos.getZ());
+            if (newState.getProperties().containsKey(BlockRedstoneWire.POWER)) {
+                int newPower = (Integer) newState.getValue(BlockRedstoneWire.POWER);
+                int oldPower = (Integer) oldState.getValue(BlockRedstoneWire.POWER);
+                if (newPower != oldPower) {
+                    BlockRedstoneUpdateEvent event = SpongeEventFactory.createBlockRedstoneUpdate(Sponge.getGame(), null, spongeLoc,
+                            Collections.singleton(spongeLoc), oldPower, newPower);
+                    Sponge.getGame().getEventManager().post(event);
+                    if (event.getNewSignalStrength() != newPower) {
+                        newState = newState.withProperty(BlockRedstoneWire.POWER, event.getNewSignalStrength());
+                    }
+                }
+            } else if (newState.getProperties().containsKey(BlockLever.POWERED)) {
+                boolean newPowered = (Boolean) newState.getValue(BlockLever.POWERED);
+                boolean oldPowered = (Boolean) oldState.getValue(BlockLever.POWERED);
+                if (newPowered != oldPowered) {
+                    BlockRedstoneUpdateEvent event = SpongeEventFactory.createBlockRedstoneUpdate(Sponge.getGame(), null, spongeLoc,
+                            Collections.singleton(spongeLoc), oldPowered ? 15 : 0, newPowered ? 15 : 0);
+                    Sponge.getGame().getEventManager().post(event);
+                }
+            }
+        }
     }
 }
