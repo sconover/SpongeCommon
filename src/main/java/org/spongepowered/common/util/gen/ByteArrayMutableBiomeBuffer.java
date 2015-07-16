@@ -27,12 +27,16 @@ package org.spongepowered.common.util.gen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.flowpowered.math.matrix.Matrix3d;
 import com.flowpowered.math.vector.Vector2i;
 import net.minecraft.world.biome.BiomeGenBase;
+import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.world.biome.BiomeType;
 import org.spongepowered.api.world.biome.BiomeTypes;
 import org.spongepowered.api.world.extent.ImmutableBiomeArea;
 import org.spongepowered.api.world.extent.MutableBiomeArea;
+import org.spongepowered.api.world.extent.StorageType;
+import org.spongepowered.api.world.extent.UnmodifiableBiomeArea;
 
 import java.util.Arrays;
 
@@ -42,6 +46,7 @@ import java.util.Arrays;
  * <p>Using {@link #detach()} the underlying byte array can be accessed.
  * The byte array can then be reused by calling {@link #reuse(Vector2i)}.</p>
  */
+@NonnullByDefault
 public final class ByteArrayMutableBiomeBuffer extends AbstractBiomeBuffer implements MutableBiomeArea {
 
     private boolean detached;
@@ -53,8 +58,12 @@ public final class ByteArrayMutableBiomeBuffer extends AbstractBiomeBuffer imple
     }
 
     public ByteArrayMutableBiomeBuffer(Vector2i start, Vector2i size) {
+        this(new byte[size.getX() * size.getY()], start, size);
+    }
+
+    public ByteArrayMutableBiomeBuffer(byte[] biomes, Vector2i start, Vector2i size) {
         super(start, size);
-        this.biomes = new byte[size.getX() * size.getY()];
+        this.biomes = biomes;
     }
 
     @Override
@@ -67,12 +76,7 @@ public final class ByteArrayMutableBiomeBuffer extends AbstractBiomeBuffer imple
         checkOpen();
         checkRange(x, z);
 
-        this.biomes[(x - this.start.getX()) | (z - this.start.getY()) << 4] = (byte) ((BiomeGenBase) biome).biomeID;
-    }
-
-    public ImmutableBiomeArea getImmutableClone() {
-        checkOpen();
-        return new ByteArrayImmutableBiomeBuffer(this.biomes, this.start, this.size);
+        this.biomes[(x - this.start.getX()) + (z - this.start.getY()) * this.size.getX()] = (byte) ((BiomeGenBase) biome).biomeID;
     }
 
     /**
@@ -119,12 +123,51 @@ public final class ByteArrayMutableBiomeBuffer extends AbstractBiomeBuffer imple
         return getBiome(position.getX(), position.getY());
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public BiomeType getBiome(int x, int z) {
         checkOpen();
 
-        byte biomeId = this.biomes[(x - this.start.getX()) | (z - this.start.getY()) << 4];
+        byte biomeId = this.biomes[(x - this.start.getX()) + (z - this.start.getY()) * this.size.getX()];
         BiomeType biomeType = (BiomeType) this.biomeById[biomeId & 0xff];
         return biomeType == null ? BiomeTypes.OCEAN : biomeType;
+    }
+
+    @Override
+    public MutableBiomeArea getBiomeView(Vector2i newMin, Vector2i newMax) {
+        return null;
+    }
+
+    @Override
+    public MutableBiomeArea getBiomeView(Matrix3d transform) {
+        return null;
+    }
+
+    @Override
+    public MutableBiomeArea getRelativeBiomeView() {
+        return null;
+    }
+
+    @Override
+    public UnmodifiableBiomeArea getUnmodifiableBiomeView() {
+        return null;
+    }
+
+    @Override
+    public MutableBiomeArea getBiomeCopy(StorageType type) {
+        checkOpen();
+        switch (type) {
+            case STANDARD:
+                return new ByteArrayMutableBiomeBuffer(this.biomes.clone(), this.start, this.size);
+            case THREAD_SAFE:
+                default:
+                throw new UnsupportedOperationException(type.name());
+        }
+    }
+
+    @Override
+    public ImmutableBiomeArea getImmutableBiomeCopy() {
+        checkOpen();
+        return new ByteArrayImmutableBiomeBuffer(this.biomes, this.start, this.size);
     }
 }

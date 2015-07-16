@@ -24,18 +24,20 @@
  */
 package org.spongepowered.common.util.gen;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.flowpowered.math.vector.Vector2i;
 import com.google.common.base.Objects;
+import org.spongepowered.api.util.PositionOutOfBoundsException;
+import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.world.extent.BiomeArea;
+import org.spongepowered.api.world.extent.MutableBiomeArea;
+import org.spongepowered.api.world.extent.StorageType;
 import org.spongepowered.common.util.VecHelper;
 
 /**
  * Base class for biome areas. This class provides methods for retrieving the
  * size and for range checking.
  */
+@NonnullByDefault
 public abstract class AbstractBiomeBuffer implements BiomeArea {
 
     protected Vector2i start;
@@ -43,19 +45,14 @@ public abstract class AbstractBiomeBuffer implements BiomeArea {
     protected Vector2i end;
 
     protected AbstractBiomeBuffer(Vector2i start, Vector2i size) {
-        this.start = checkNotNull(start, "start");
-        this.size = checkNotNull(size, "size");
-
-        checkArgument(size.getX() > 0);
-        checkArgument(size.getY() > 0);
-
+        this.start = start;
+        this.size = size;
         this.end = this.start.add(this.size).sub(Vector2i.ONE);
     }
 
     protected final void checkRange(int x, int z) {
-        if (x < this.start.getX() || x > this.end.getX()
-                || z < this.start.getY() || z > this.end.getY()) {
-            throw new IndexOutOfBoundsException("Position (" + new Vector2i(x, z) + " out of bounds for " + this);
+        if (!VecHelper.inBounds(x, z, start, end)) {
+            throw new PositionOutOfBoundsException(new Vector2i(x, z), this.start, this.end);
         }
     }
 
@@ -82,6 +79,11 @@ public abstract class AbstractBiomeBuffer implements BiomeArea {
     @Override
     public boolean containsBiome(int x, int z) {
         return VecHelper.inBounds(x, z, this.start, this.end);
+    }
+
+    @Override
+    public MutableBiomeArea getBiomeCopy() {
+        return getBiomeCopy(StorageType.STANDARD);
     }
 
     @Override
