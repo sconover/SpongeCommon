@@ -76,8 +76,24 @@ public final class ByteArrayMutableBiomeBuffer extends AbstractBiomeBuffer imple
         checkOpen();
         checkRange(x, z);
 
-        this.biomes[(x - this.start.getX()) + (z - this.start.getY()) * this.size.getX()] = (byte) ((BiomeGenBase) biome).biomeID;
+        this.biomes[getIndex(x, z)] = (byte) ((BiomeGenBase) biome).biomeID;
     }
+
+    @Override
+    public BiomeType getBiome(Vector2i position) {
+        return getBiome(position.getX(), position.getY());
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public BiomeType getBiome(int x, int z) {
+        checkOpen();
+
+        byte biomeId = this.biomes[getIndex(x, z)];
+        BiomeType biomeType = (BiomeType) this.biomeById[biomeId & 0xff];
+        return biomeType == null ? BiomeTypes.OCEAN : biomeType;
+    }
+
 
     /**
      * Gets the internal byte array, and prevents further of it through this
@@ -119,21 +135,6 @@ public final class ByteArrayMutableBiomeBuffer extends AbstractBiomeBuffer imple
     }
 
     @Override
-    public BiomeType getBiome(Vector2i position) {
-        return getBiome(position.getX(), position.getY());
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public BiomeType getBiome(int x, int z) {
-        checkOpen();
-
-        byte biomeId = this.biomes[(x - this.start.getX()) + (z - this.start.getY()) * this.size.getX()];
-        BiomeType biomeType = (BiomeType) this.biomeById[biomeId & 0xff];
-        return biomeType == null ? BiomeTypes.OCEAN : biomeType;
-    }
-
-    @Override
     public MutableBiomeArea getBiomeView(Vector2i newMin, Vector2i newMax) {
         return null;
     }
@@ -160,7 +161,7 @@ public final class ByteArrayMutableBiomeBuffer extends AbstractBiomeBuffer imple
             case STANDARD:
                 return new ByteArrayMutableBiomeBuffer(this.biomes.clone(), this.start, this.size);
             case THREAD_SAFE:
-                default:
+            default:
                 throw new UnsupportedOperationException(type.name());
         }
     }

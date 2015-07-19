@@ -46,17 +46,26 @@ public abstract class AbstractBlockBuffer implements BlockVolume {
     protected final Vector3i start;
     protected final Vector3i size;
     protected final Vector3i end;
+    private final int yLine;
+    private final int yzSlice;
 
     protected AbstractBlockBuffer(Vector3i start, Vector3i size) {
         this.start = start;
         this.size = size;
         this.end = this.start.add(this.size).sub(Vector3i.ONE);
+
+        this.yLine = size.getY();
+        this.yzSlice = this.yLine * size.getZ();
     }
 
     protected void checkRange(int x, int y, int z) {
         if (!VecHelper.inBounds(x, y, z, start, end)) {
             throw new PositionOutOfBoundsException(new Vector3i(x, y, z), this.start, this.end);
         }
+    }
+
+    protected int getIndex(int x, int y, int z) {
+        return (x - this.start.getX()) * this.yzSlice + (z - this.start.getZ()) * this.yLine + (y - this.start.getY());
     }
 
     @Override
@@ -107,9 +116,9 @@ public abstract class AbstractBlockBuffer implements BlockVolume {
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
-                .add("min", this.getBlockMin())
-                .add("max", this.getBlockMax())
-                .toString();
+            .add("min", this.getBlockMin())
+            .add("max", this.getBlockMax())
+            .toString();
     }
 
 }

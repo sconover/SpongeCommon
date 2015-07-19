@@ -17,14 +17,10 @@ public class ShortArrayImmutableBlockBuffer extends AbstractBlockBuffer implemen
     @SuppressWarnings("ConstantConditions")
     private static final BlockState AIR = BlockTypes.AIR.getDefaultState();
     private final short[] blocks;
-    private final int yLine;
-    private final int yzSlice;
 
     public ShortArrayImmutableBlockBuffer(short[] blocks, Vector3i start, Vector3i size) {
         super(start, size);
         this.blocks = blocks.clone();
-        this.yLine = size.getY();
-        this.yzSlice = this.yLine * size.getZ();
     }
 
     @Override
@@ -32,10 +28,6 @@ public class ShortArrayImmutableBlockBuffer extends AbstractBlockBuffer implemen
         checkRange(x, y, z);
         BlockState block = (BlockState) Block.BLOCK_STATE_IDS.getByValue(this.blocks[getIndex(x, y, z)]);
         return block == null ? AIR : block;
-    }
-
-    private int getIndex(int x, int y, int z) {
-        return (x - this.start.getX()) * this.yzSlice + (z - this.start.getZ()) * this.yLine + (y - this.start.getY());
     }
 
     @Override

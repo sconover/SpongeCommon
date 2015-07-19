@@ -43,17 +43,24 @@ public abstract class AbstractBiomeBuffer implements BiomeArea {
     protected Vector2i start;
     protected Vector2i size;
     protected Vector2i end;
+    private final int xLine;
 
     protected AbstractBiomeBuffer(Vector2i start, Vector2i size) {
         this.start = start;
         this.size = size;
         this.end = this.start.add(this.size).sub(Vector2i.ONE);
+
+        this.xLine = size.getX();
     }
 
     protected final void checkRange(int x, int z) {
         if (!VecHelper.inBounds(x, z, start, end)) {
             throw new PositionOutOfBoundsException(new Vector2i(x, z), this.start, this.end);
         }
+    }
+
+    protected int getIndex(int x, int y) {
+        return (y - this.start.getY()) * this.xLine + (x - this.start.getX());
     }
 
     @Override
@@ -89,8 +96,8 @@ public abstract class AbstractBiomeBuffer implements BiomeArea {
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
-                .add("min", this.getBiomeMin())
-                .add("max", this.getBiomeMax())
-                .toString();
+            .add("min", this.getBiomeMin())
+            .add("max", this.getBiomeMax())
+            .toString();
     }
 }
