@@ -24,13 +24,16 @@
  */
 package org.spongepowered.common.mixin.core.block;
 
-import static org.spongepowered.api.data.DataQuery.of;
-
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import net.minecraft.block.Block;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.BlockStateBase;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockType;
@@ -44,6 +47,9 @@ import org.spongepowered.common.Sponge;
 import org.spongepowered.common.data.SpongeBlockProcessor;
 import org.spongepowered.common.data.SpongeManipulatorRegistry;
 import org.spongepowered.common.interfaces.block.IMixinBlock;
+
+import static com.google.common.base.Preconditions.checkState;
+import static org.spongepowered.api.data.DataQuery.of;
 
 @NonnullByDefault
 @Mixin(net.minecraft.block.state.BlockState.StateImplementation.class)
@@ -101,5 +107,65 @@ public abstract class MixinBlockState extends BlockStateBase implements BlockSta
         return new MemoryDataContainer()
             .set(of("BlockType"), this.getType().getId())
             .set(of("Data"), this.getManipulators());
+    }
+
+    @Override
+    public BlockState withPropertyEnumOrdinal(String propertyName, int ordinal) {
+        PropertyEnum propertyEnum = getPropertyEnumWithName(propertyName);
+
+        Map<Integer, Enum> ordinalToEnum = ordinalToEnum(propertyEnum.getAllowedValues());
+
+        checkState(ordinalToEnum.containsKey(ordinal),
+            String.format("Enum ordinal out of range: %d", ordinal));
+
+        return (BlockState)withProperty(propertyEnum, ordinalToEnum.get(ordinal));
+    }
+
+    @Override public boolean isEnumOrdinalValid(String propertyName, int ordinal) {
+        PropertyEnum propertyEnum = getPropertyEnumWithName(propertyName);
+        Map<Integer, Enum> ordinalToEnum = ordinalToEnum(propertyEnum.getAllowedValues());
+        return ordinalToEnum.containsKey(ordinal);
+    }
+
+    @Override public int getPropertyEnumOrdinalValue(String propertyName) {
+        PropertyEnum propertyEnum = getPropertyEnumWithName(propertyName);
+        return ((Enum)getProperties().get(propertyEnum)).ordinal();
+    }
+
+    @Override public boolean hasPropertyEnum(String propertyName) {
+        return maybeGetPropertyWithName(propertyName).isPresent() &&
+            getPropertyWithName(propertyName) instanceof PropertyEnum;
+    }
+
+    private PropertyEnum getPropertyEnumWithName(String propertyName) {
+        checkState(hasPropertyEnum(propertyName),
+            String.format("BlockState does not have enum property %s", propertyName));
+        return (PropertyEnum) getPropertyWithName(propertyName);
+    }
+
+    private IProperty getPropertyWithName(String propertyName) {
+        Optional<IProperty> maybeProperty = maybeGetPropertyWithName(propertyName);
+        if (maybeProperty.isPresent()) return maybeProperty.get();
+        throw new RuntimeException(
+            String.format("Unexpectedly did not find property with name %s", propertyName));
+    }
+
+    private Optional<IProperty> maybeGetPropertyWithName(String propertyName) {
+        for (Object key : getProperties().keySet()) {
+            IProperty property = (IProperty)key;
+            if (property.getName().equals(propertyName)) {
+                return Optional.of(property);
+            }
+        }
+        return Optional.absent();
+    }
+
+    private Map<Integer, Enum> ordinalToEnum(Collection enumValues) {
+        Map<Integer, Enum> result = new LinkedHashMap<Integer, Enum>();
+        for (Object o: enumValues) {
+            Enum e = (Enum)o;
+            result.put(e.ordinal(), e);
+        }
+        return result;
     }
 }
