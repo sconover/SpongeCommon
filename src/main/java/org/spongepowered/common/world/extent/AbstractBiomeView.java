@@ -22,60 +22,44 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.util.gen;
+package org.spongepowered.common.world.extent;
 
 import com.flowpowered.math.vector.Vector2i;
-import com.google.common.base.Objects;
 import org.spongepowered.api.util.PositionOutOfBoundsException;
-import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.api.world.biome.BiomeType;
 import org.spongepowered.api.world.extent.BiomeArea;
+import org.spongepowered.api.world.extent.ImmutableBiomeArea;
 import org.spongepowered.api.world.extent.MutableBiomeArea;
 import org.spongepowered.api.world.extent.StorageType;
 import org.spongepowered.common.util.VecHelper;
 
-/**
- * Base class for biome areas. This class provides methods for retrieving the
- * size and for range checking.
- */
-@NonnullByDefault
-public abstract class AbstractBiomeBuffer implements BiomeArea {
+public abstract class AbstractBiomeView<A extends BiomeArea> implements BiomeArea {
 
-    protected Vector2i start;
-    protected Vector2i size;
-    protected Vector2i end;
-    private final int xLine;
+    protected final A area;
+    protected final Vector2i min;
+    protected final Vector2i max;
+    protected final Vector2i size;
 
-    protected AbstractBiomeBuffer(Vector2i start, Vector2i size) {
-        this.start = start;
-        this.size = size;
-        this.end = this.start.add(this.size).sub(Vector2i.ONE);
-
-        this.xLine = size.getX();
-    }
-
-    protected final void checkRange(int x, int z) {
-        if (!VecHelper.inBounds(x, z, this.start, this.end)) {
-            throw new PositionOutOfBoundsException(new Vector2i(x, z), this.start, this.end);
-        }
-    }
-
-    protected int getIndex(int x, int y) {
-        return (y - this.start.getY()) * this.xLine + (x - this.start.getX());
+    public AbstractBiomeView(A area, Vector2i min, Vector2i max) {
+        this.area = area;
+        this.min = min;
+        this.max = max;
+        this.size = max.sub(min).add(Vector2i.ONE);
     }
 
     @Override
     public Vector2i getBiomeMin() {
-        return this.start;
+        return min;
     }
 
     @Override
     public Vector2i getBiomeMax() {
-        return this.end;
+        return max;
     }
 
     @Override
     public Vector2i getBiomeSize() {
-        return this.size;
+        return size;
     }
 
     @Override
@@ -85,19 +69,38 @@ public abstract class AbstractBiomeBuffer implements BiomeArea {
 
     @Override
     public boolean containsBiome(int x, int z) {
-        return VecHelper.inBounds(x, z, this.start, this.end);
+        return VecHelper.inBounds(x, z, min, max);
+    }
+
+    protected final void checkRange(int x, int z) {
+        if (!VecHelper.inBounds(x, z, this.min, this.max)) {
+            throw new PositionOutOfBoundsException(new Vector2i(x, z), this.min, this.max);
+        }
+    }
+
+    @Override
+    public BiomeType getBiome(Vector2i position) {
+        return getBiome(position.getX(), position.getY());
+    }
+
+    @Override
+    public BiomeType getBiome(int x, int z) {
+        checkRange(x, z);
+        return area.getBiome(x, z);
     }
 
     @Override
     public MutableBiomeArea getBiomeCopy() {
-        return getBiomeCopy(StorageType.STANDARD);
+        return null;
     }
 
     @Override
-    public String toString() {
-        return Objects.toStringHelper(this)
-            .add("min", this.getBiomeMin())
-            .add("max", this.getBiomeMax())
-            .toString();
+    public MutableBiomeArea getBiomeCopy(StorageType type) {
+        return null;
+    }
+
+    @Override
+    public ImmutableBiomeArea getImmutableBiomeCopy() {
+        return null;
     }
 }

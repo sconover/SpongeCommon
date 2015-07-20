@@ -59,7 +59,7 @@ public abstract class AbstractBlockBuffer implements BlockVolume {
     }
 
     protected void checkRange(int x, int y, int z) {
-        if (!VecHelper.inBounds(x, y, z, start, end)) {
+        if (!VecHelper.inBounds(x, y, z, this.start, this.end)) {
             throw new PositionOutOfBoundsException(new Vector3i(x, y, z), this.start, this.end);
         }
     }

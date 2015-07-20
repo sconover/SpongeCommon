@@ -22,53 +22,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.util.gen;
+package org.spongepowered.common.world.extent;
 
 import com.flowpowered.math.matrix.Matrix3d;
 import com.flowpowered.math.vector.Vector2i;
-import net.minecraft.world.biome.BiomeGenBase;
-import org.spongepowered.api.util.annotation.NonnullByDefault;
-import org.spongepowered.api.world.biome.BiomeType;
-import org.spongepowered.api.world.biome.BiomeTypes;
 import org.spongepowered.api.world.extent.ImmutableBiomeArea;
-import org.spongepowered.api.world.extent.MutableBiomeArea;
-import org.spongepowered.api.world.extent.StorageType;
 import org.spongepowered.api.world.extent.UnmodifiableBiomeArea;
-import org.spongepowered.common.world.extent.ImmutableBiomeView;
 
-/**
- * Immutable biome area, backed by a byte array. The array passed to the
- * constructor is copied to ensure that the instance is immutable.
- */
-@NonnullByDefault
-public final class ByteArrayImmutableBiomeBuffer extends AbstractBiomeBuffer implements ImmutableBiomeArea {
+public class ImmutableBiomeView extends AbstractBiomeView<ImmutableBiomeArea> implements ImmutableBiomeArea {
 
-    private final BiomeGenBase[] biomeById = BiomeGenBase.getBiomeGenArray();
-    private final byte[] biomes;
-
-    public ByteArrayImmutableBiomeBuffer(byte[] biomes, Vector2i start, Vector2i size) {
-        super(start, size);
-        this.biomes = biomes.clone();
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public BiomeType getBiome(int x, int z) {
-        checkRange(x, z);
-        BiomeType biomeType = (BiomeType) this.biomeById[this.biomes[getIndex(x, z)] & 0xff];
-        return biomeType == null ? BiomeTypes.OCEAN : biomeType;
-    }
-
-    @Override
-    public BiomeType getBiome(Vector2i position) {
-        return getBiome(position.getX(), position.getY());
+    public ImmutableBiomeView(ImmutableBiomeArea area, Vector2i min, Vector2i max) {
+        super(area, min, max);
     }
 
     @Override
     public ImmutableBiomeArea getBiomeView(Vector2i newMin, Vector2i newMax) {
         checkRange(newMin.getX(), newMin.getY());
         checkRange(newMax.getX(), newMax.getY());
-        return new ImmutableBiomeView(this, newMin, newMax);
+        return new ImmutableBiomeView(this.area, newMin, newMax);
     }
 
     @Override
@@ -83,22 +54,6 @@ public final class ByteArrayImmutableBiomeBuffer extends AbstractBiomeBuffer imp
 
     @Override
     public UnmodifiableBiomeArea getUnmodifiableBiomeView() {
-        return this;
-    }
-
-    @Override
-    public MutableBiomeArea getBiomeCopy(StorageType type) {
-        switch (type) {
-            case STANDARD:
-                return new ByteArrayMutableBiomeBuffer(this.biomes.clone(), this.start, this.size);
-            case THREAD_SAFE:
-            default:
-                throw new UnsupportedOperationException(type.name());
-        }
-    }
-
-    @Override
-    public ImmutableBiomeArea getImmutableBiomeCopy() {
         return this;
     }
 }

@@ -33,6 +33,7 @@ import org.spongepowered.api.world.extent.ImmutableBiomeArea;
 import org.spongepowered.api.world.extent.MutableBiomeArea;
 import org.spongepowered.api.world.extent.StorageType;
 import org.spongepowered.api.world.extent.UnmodifiableBiomeArea;
+import org.spongepowered.common.world.extent.ImmutableBiomeView;
 
 /**
  * Mutable view of a {@link BiomeGenBase} array.
@@ -73,7 +74,9 @@ public final class ObjectArrayImmutableBiomeBuffer extends AbstractBiomeBuffer i
 
     @Override
     public ImmutableBiomeArea getBiomeView(Vector2i newMin, Vector2i newMax) {
-        return null;
+        checkRange(newMin.getX(), newMin.getY());
+        checkRange(newMax.getX(), newMax.getY());
+        return new ImmutableBiomeView(this, newMin, newMax);
     }
 
     @Override
