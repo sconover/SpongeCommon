@@ -28,15 +28,24 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.block.Block;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.BlockStateBase;
+import net.minecraft.util.IStringSerializable;
+import org.spongepowered.api.block.BlockMetadata;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.block.BooleanPropertyInfo;
+import org.spongepowered.api.block.EnumPropertyInfo;
+import org.spongepowered.api.block.IntegerPropertyInfo;
+import org.spongepowered.api.block.PropertyInfo;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataManipulator;
 import org.spongepowered.api.data.MemoryDataContainer;
@@ -135,6 +144,36 @@ public abstract class MixinBlockState extends BlockStateBase implements BlockSta
     @Override public boolean hasPropertyEnum(String propertyName) {
         return maybeGetPropertyWithName(propertyName).isPresent() &&
             getPropertyWithName(propertyName) instanceof PropertyEnum;
+    }
+
+    public BlockMetadata getMetadata() {
+        Iterator iter = getProperties().entrySet().iterator();
+        List<PropertyInfo> propertyInfos = new ArrayList<PropertyInfo>();
+        while (iter.hasNext()) {
+            Map.Entry<IProperty,Comparable> entry = (Map.Entry<IProperty,Comparable>)iter.next();
+            final IProperty property = entry.getKey();
+
+            if (property.getValueClass().equals(Boolean.class)) {
+                boolean value = (Boolean) entry.getValue();
+                propertyInfos.add(new BooleanPropertyInfo(property.getName(), value));
+            } else if (property.getValueClass().equals(Integer.class)) {
+                int value = (Integer) entry.getValue();
+                List<Integer> allowedValues = new ArrayList<Integer>(property.getAllowedValues());
+                propertyInfos.add(new IntegerPropertyInfo(property.getName(), value, allowedValues));
+            } else {
+                IStringSerializable value = (IStringSerializable)entry.getValue();
+                final List<String> valueNames = new ArrayList<String>();
+                for (Object allowedValue : property.getAllowedValues()) {
+                    IStringSerializable stringSerializable = (IStringSerializable) allowedValue;
+                    valueNames.add(stringSerializable.getName());
+                }
+                propertyInfos.add(new EnumPropertyInfo(
+                    property.getName(),
+                    value.getName(),
+                    valueNames));
+            }
+        }
+        return new BlockMetadata(getType(), propertyInfos);
     }
 
     private PropertyEnum getPropertyEnumWithName(String propertyName) {
