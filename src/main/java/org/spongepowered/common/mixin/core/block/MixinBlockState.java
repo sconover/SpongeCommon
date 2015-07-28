@@ -130,6 +130,24 @@ public abstract class MixinBlockState extends BlockStateBase implements BlockSta
         return (BlockState)withProperty(propertyEnum, ordinalToEnum.get(ordinal));
     }
 
+    @Override
+    public BlockState withPropertyByPrimitives(String propertyName, Comparable value) {
+        IProperty property = getPropertyWithName(propertyName);
+
+        if (property instanceof PropertyEnum) {
+            PropertyEnum propertyEnum = (PropertyEnum)property;
+            Map<String, Enum> nameToEnum = nameToEnum(propertyEnum.getAllowedValues());
+            checkState(nameToEnum.containsKey(value),
+                String.format("Enum not found: property=%s value=%s", property.getName(), value));
+            return (BlockState)withProperty(propertyEnum, nameToEnum.get(value));
+        } else {
+            checkState(property.getAllowedValues().contains(value),
+                String.format("Value not allowed: property=%s value=%s",
+                    property.getName(), String.valueOf(value)));
+            return (BlockState)withProperty(property, value);
+        }
+    }
+
     @Override public boolean isEnumOrdinalValid(String propertyName, int ordinal) {
         PropertyEnum propertyEnum = getPropertyEnumWithName(propertyName);
         Map<Integer, Enum> ordinalToEnum = ordinalToEnum(propertyEnum.getAllowedValues());
@@ -204,6 +222,15 @@ public abstract class MixinBlockState extends BlockStateBase implements BlockSta
         for (Object o: enumValues) {
             Enum e = (Enum)o;
             result.put(e.ordinal(), e);
+        }
+        return result;
+    }
+
+    private Map<String, Enum> nameToEnum(Collection enumValues) {
+        Map<String, Enum> result = new LinkedHashMap<String, Enum>();
+        for (Object o: enumValues) {
+            Enum e = (Enum)o;
+            result.put(e.toString(), e);
         }
         return result;
     }
