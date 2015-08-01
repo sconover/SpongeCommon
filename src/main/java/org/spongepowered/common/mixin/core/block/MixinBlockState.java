@@ -148,6 +148,25 @@ public abstract class MixinBlockState extends BlockStateBase implements BlockSta
         }
     }
 
+    @Override public Map<String, Object> getPrimitiveProperties() {
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        for (Object entryObject : getProperties().entrySet()) {
+            Map.Entry<IProperty, Comparable> entry = (Map.Entry<IProperty, Comparable>) entryObject;
+            final IProperty property = entry.getKey();
+            if (property.getValueClass().equals(Boolean.class)) {
+                boolean value = (Boolean) entry.getValue();
+                result.put(property.getName(), value);
+            } else if (property.getValueClass().equals(Integer.class)) {
+                int value = (Integer) entry.getValue();
+                result.put(property.getName(), value);
+            } else {
+                IStringSerializable value = (IStringSerializable) entry.getValue();
+                result.put(property.getName(), value.getName());
+            }
+        }
+        return result;
+    }
+
     @Override public boolean isEnumOrdinalValid(String propertyName, int ordinal) {
         PropertyEnum propertyEnum = getPropertyEnumWithName(propertyName);
         Map<Integer, Enum> ordinalToEnum = ordinalToEnum(propertyEnum.getAllowedValues());
@@ -170,7 +189,6 @@ public abstract class MixinBlockState extends BlockStateBase implements BlockSta
         while (iter.hasNext()) {
             Map.Entry<IProperty,Comparable> entry = (Map.Entry<IProperty,Comparable>)iter.next();
             final IProperty property = entry.getKey();
-
             if (property.getValueClass().equals(Boolean.class)) {
                 boolean value = (Boolean) entry.getValue();
                 propertyInfos.add(new BooleanPropertyInfo(property.getName(), value));
