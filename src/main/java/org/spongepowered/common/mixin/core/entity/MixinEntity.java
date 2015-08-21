@@ -24,10 +24,13 @@
  */
 package org.spongepowered.common.mixin.core.entity;
 
-import static org.spongepowered.api.data.DataQuery.of;
-
 import com.flowpowered.math.vector.Vector3d;
 import com.google.common.base.Optional;
+import java.util.ArrayDeque;
+import java.util.EnumSet;
+import java.util.Random;
+import java.util.UUID;
+import javax.annotation.Nullable;
 import net.minecraft.entity.DataWatcher;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -60,12 +63,7 @@ import org.spongepowered.common.registry.SpongeGameRegistry;
 import org.spongepowered.common.util.SpongeHooks;
 import org.spongepowered.common.world.DimensionManager;
 
-import java.util.ArrayDeque;
-import java.util.EnumSet;
-import java.util.Random;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
+import static org.spongepowered.api.data.DataQuery.of;
 
 @NonnullByDefault
 @Mixin(net.minecraft.entity.Entity.class)

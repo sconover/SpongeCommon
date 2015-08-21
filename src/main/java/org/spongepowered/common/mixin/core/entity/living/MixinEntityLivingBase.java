@@ -24,10 +24,12 @@
  */
 package org.spongepowered.common.mixin.core.entity.living;
 
-import static org.spongepowered.api.data.DataQuery.of;
-
 import com.flowpowered.math.vector.Vector3d;
 import com.google.common.base.Optional;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.attributes.IAttribute;
@@ -55,11 +57,7 @@ import org.spongepowered.common.entity.living.human.EntityHuman;
 import org.spongepowered.common.interfaces.entity.IMixinEntityLivingBase;
 import org.spongepowered.common.mixin.core.entity.MixinEntity;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import javax.annotation.Nullable;
+import static org.spongepowered.api.data.DataQuery.of;
 
 @NonnullByDefault
 @Mixin(EntityLivingBase.class)
@@ -295,5 +293,4 @@ public abstract class MixinEntityLivingBase extends MixinEntity implements Livin
             world.setEntityState(self, state);
         }
     }
-
 }
