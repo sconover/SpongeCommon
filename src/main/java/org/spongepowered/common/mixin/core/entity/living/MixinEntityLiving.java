@@ -33,19 +33,8 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.ai.EntityAIAvoidEntity;
 import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAIFollowOwner;
-import net.minecraft.entity.ai.EntityAILeapAtTarget;
-import net.minecraft.entity.ai.EntityAIMate;
-import net.minecraft.entity.ai.EntityAIOcelotAttack;
-import net.minecraft.entity.ai.EntityAIOcelotSit;
-import net.minecraft.entity.ai.EntityAISit;
-import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntityAITempt;
-import net.minecraft.entity.ai.EntityAIWander;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import org.objectweb.asm.Opcodes;
@@ -161,10 +150,10 @@ public abstract class MixinEntityLiving extends MixinEntityLivingBase implements
         checkState(EXTERNAL_NAME_TO_TASK_CLASS.containsKey(taskName),
             String.format("No task class found for external name %s", taskName));
 
-        Class taskClass = EXTERNAL_NAME_TO_TASK_CLASS.get(taskName);
+        String taskClassName = EXTERNAL_NAME_TO_TASK_CLASS.get(taskName);
 
         for (EntityAIBase task: getTasks()) {
-            if (task.getClass().equals(taskClass)) {
+            if (task.getClass().getName().equals(taskClassName)) {
                 return Optional.of(task);
             }
         }
@@ -198,31 +187,96 @@ public abstract class MixinEntityLiving extends MixinEntityLivingBase implements
     }
 
     private String externalNameForTaskEntry(EntityAIBase taskEntry) {
-        checkState(TASK_CLASS_TO_EXTERNAL_NAME.containsKey(taskEntry.getClass()),
+        checkState(TASK_CLASS_TO_EXTERNAL_NAME.containsKey(taskEntry.getClass().getName()),
             String.format("No external name found for class %s", taskEntry.getClass().getName()));
-        return TASK_CLASS_TO_EXTERNAL_NAME.get(taskEntry.getClass());
+        return TASK_CLASS_TO_EXTERNAL_NAME.get(taskEntry.getClass().getName());
     }
 
-    private static final Map<String, Class> EXTERNAL_NAME_TO_TASK_CLASS =
-        new LinkedHashMap<String, Class>();
+    private static final Map<String, String> EXTERNAL_NAME_TO_TASK_CLASS =
+        new LinkedHashMap<String, String>();
 
-    private static final Map<Class, String> TASK_CLASS_TO_EXTERNAL_NAME =
-        new LinkedHashMap<Class, String>();
+    private static final Map<String, String> TASK_CLASS_TO_EXTERNAL_NAME =
+        new LinkedHashMap<String, String>();
 
     static {
-        EXTERNAL_NAME_TO_TASK_CLASS.put("swim", EntityAISwimming.class);
-        EXTERNAL_NAME_TO_TASK_CLASS.put("sit", EntityAISit.class);
-        EXTERNAL_NAME_TO_TASK_CLASS.put("tempt", EntityAITempt.class);
-        EXTERNAL_NAME_TO_TASK_CLASS.put("follow_owner", EntityAIFollowOwner.class);
-        EXTERNAL_NAME_TO_TASK_CLASS.put("ocelot_sit", EntityAIOcelotSit.class);
-        EXTERNAL_NAME_TO_TASK_CLASS.put("leap_at_target", EntityAILeapAtTarget.class);
-        EXTERNAL_NAME_TO_TASK_CLASS.put("ocelot_attack", EntityAIOcelotAttack.class);
-        EXTERNAL_NAME_TO_TASK_CLASS.put("mate", EntityAIMate.class);
-        EXTERNAL_NAME_TO_TASK_CLASS.put("wander", EntityAIWander.class);
-        EXTERNAL_NAME_TO_TASK_CLASS.put("watch_closest", EntityAIWatchClosest.class);
-        EXTERNAL_NAME_TO_TASK_CLASS.put("avoid", EntityAIAvoidEntity.class);
+        EXTERNAL_NAME_TO_TASK_CLASS.put("attack_with_arrow", "net.minecraft.entity.ai.EntityAIArrowAttack");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("attack_on_collide", "net.minecraft.entity.ai.EntityAIAttackOnCollide");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("avoid", "net.minecraft.entity.ai.EntityAIAvoidEntity");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("beg", "net.minecraft.entity.ai.EntityAIBeg");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("break_door", "net.minecraft.entity.ai.EntityAIBreakDoor");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("player_control", "net.minecraft.entity.ai.EntityAIControlledByPlayer");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("swell_creeper", "net.minecraft.entity.ai.EntityAICreeperSwell");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("defend_village", "net.minecraft.entity.ai.EntityAIDefendVillage");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("use_door", "net.minecraft.entity.ai.EntityAIDoorInteract");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("eat_grass", "net.minecraft.entity.ai.EntityAIEatGrass");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("find_nearest_thing", "net.minecraft.entity.ai.EntityAIFindEntityNearest");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("find_nearest_thing_to_player", "net.minecraft.entity.ai.EntityAIFindEntityNearestPlayer");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("flee_sun", "net.minecraft.entity.ai.EntityAIFleeSun");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("follow_golem", "net.minecraft.entity.ai.EntityAIFollowGolem");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("follow_owner", "net.minecraft.entity.ai.EntityAIFollowOwner");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("follow_parent", "net.minecraft.entity.ai.EntityAIFollowParent");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("harvest_farmland", "net.minecraft.entity.ai.EntityAIHarvestFarmland");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("hurt_by_target", "net.minecraft.entity.ai.EntityAIHurtByTarget");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("leap_at_target", "net.minecraft.entity.ai.EntityAILeapAtTarget");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("look_at_trade_player", "net.minecraft.entity.ai.EntityAILookAtTradePlayer");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("look_at_villager", "net.minecraft.entity.ai.EntityAILookAtVillager");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("look_idle", "net.minecraft.entity.ai.EntityAILookIdle");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("mate", "net.minecraft.entity.ai.EntityAIMate");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("move_indoor", "net.minecraft.entity.ai.EntityAIMoveIndoors");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("move_through_village", "net.minecraft.entity.ai.EntityAIMoveThroughVillage");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("move_to_block", "net.minecraft.entity.ai.EntityAIMoveToBlock");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("move_towards_restriction", "net.minecraft.entity.ai.EntityAIMoveTowardsRestriction");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("move_towards_target", "net.minecraft.entity.ai.EntityAIMoveTowardsTarget");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("attack_nearest_target", "net.minecraft.entity.ai.EntityAINearestAttackableTarget");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("ocelot_attack", "net.minecraft.entity.ai.EntityAIOcelotAttack");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("ocelot_sit", "net.minecraft.entity.ai.EntityAIOcelotSit");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("open_door", "net.minecraft.entity.ai.EntityAIOpenDoor");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("owner_get_hurt_by_target", "net.minecraft.entity.ai.EntityAIOwnerHurtByTarget");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("owner_hurt_target", "net.minecraft.entity.ai.EntityAIOwnerHurtTarget");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("panic", "net.minecraft.entity.ai.EntityAIPanic");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("play", "net.minecraft.entity.ai.EntityAIPlay");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("avoid_doors", "net.minecraft.entity.ai.EntityAIRestrictOpenDoor");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("avoid_sun", "net.minecraft.entity.ai.EntityAIRestrictSun");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("run_around_like_crazy", "net.minecraft.entity.ai.EntityAIRunAroundLikeCrazy");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("sit", "net.minecraft.entity.ai.EntityAISit");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("swim", "net.minecraft.entity.ai.EntityAISwimming");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("target_untamed", "net.minecraft.entity.ai.EntityAITargetNonTamed");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("tempt", "net.minecraft.entity.ai.EntityAITempt");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("trade_with_player", "net.minecraft.entity.ai.EntityAITradePlayer");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("interact_with_other_villagers", "net.minecraft.entity.ai.EntityAIVillagerInteract");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("mate_with_other_villager", "net.minecraft.entity.ai.EntityAIVillagerMate");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("wander", "net.minecraft.entity.ai.EntityAIWander");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("watch_closest", "net.minecraft.entity.ai.EntityAIWatchClosest");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("watch_closest_2", "net.minecraft.entity.ai.EntityAIWatchClosest2");
 
-        for (Map.Entry<String,Class> entry: EXTERNAL_NAME_TO_TASK_CLASS.entrySet()) {
+        EXTERNAL_NAME_TO_TASK_CLASS.put("spider_attack", "net.minecraft.entity.monster.EntitySpider$AISpiderAttack");
+
+        EXTERNAL_NAME_TO_TASK_CLASS.put("slime_float", "net.minecraft.entity.monster.EntitySlime$AISlimeFloat");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("slime_attack", "net.minecraft.entity.monster.EntitySlime$AISlimeAttack");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("slime_face_random", "net.minecraft.entity.monster.EntitySlime$AISlimeFaceRandom");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("slime_hop", "net.minecraft.entity.monster.EntitySlime$AISlimeHop");
+
+        EXTERNAL_NAME_TO_TASK_CLASS.put("ghast_fly", "net.minecraft.entity.monster.EntityGhast$AIRandomFly");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("ghast_look_around", "net.minecraft.entity.monster.EntityGhast$AILookAround");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("ghast_fireball_attack", "net.minecraft.entity.monster.EntityGhast$AIFireballAttack");
+
+        EXTERNAL_NAME_TO_TASK_CLASS.put("enderman_place_block", "net.minecraft.entity.monster.EntityEnderman$AIPlaceBlock");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("enderman_take_block", "net.minecraft.entity.monster.EntityEnderman$AITakeBlock");
+
+        EXTERNAL_NAME_TO_TASK_CLASS.put("summon_silverfish", "net.minecraft.entity.monster.EntitySilverfish$AISummonSilverfish");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("silverfish_hide_in_stone", "net.minecraft.entity.monster.EntitySilverfish$AIHideInStone");
+
+        EXTERNAL_NAME_TO_TASK_CLASS.put("blaze_fireball_attack", "net.minecraft.entity.monster.EntityBlaze$AIFireballAttack");
+
+        EXTERNAL_NAME_TO_TASK_CLASS.put("squid_move_random", "net.minecraft.entity.passive.EntitySquid$AIMoveRandom");
+
+        EXTERNAL_NAME_TO_TASK_CLASS.put("guardian_attack", "net.minecraft.entity.monster.EntityGuardian$AIGuardianAttack");
+
+        EXTERNAL_NAME_TO_TASK_CLASS.put("rabbit_panic", "net.minecraft.entity.passive.EntityRabbit$AIPanic");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("rabbit_raid_farm", "net.minecraft.entity.passive.EntityRabbit$AIRaidFarm");
+        EXTERNAL_NAME_TO_TASK_CLASS.put("rabbit_avoid_wolves", "net.minecraft.entity.passive.EntityRabbit$AIAvoidEntity");
+
+        for (Map.Entry<String,String> entry: EXTERNAL_NAME_TO_TASK_CLASS.entrySet()) {
             TASK_CLASS_TO_EXTERNAL_NAME.put(entry.getValue(), entry.getKey());
         }
     }
