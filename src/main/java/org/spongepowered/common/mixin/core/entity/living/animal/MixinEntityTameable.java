@@ -40,4 +40,6 @@ public abstract class MixinEntityTameable extends MixinEntityAnimal {
   public abstract void shadow$setOwnerId(String id);
   @Shadow(prefix = "shadow$")
   public abstract String shadow$getOwnerId();
+  @Shadow(prefix = "shadow$")
+  public abstract boolean shadow$isSitting();
 }
