@@ -28,11 +28,16 @@ import net.minecraft.entity.passive.EntityHorse;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.manipulator.entity.HorseData;
 import org.spongepowered.api.entity.living.animal.Horse;
+import org.spongepowered.api.entity.living.animal.Tameable;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.asm.mixin.Implements;
+import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 
 @NonnullByDefault
 @Mixin(EntityHorse.class)
+@Implements(@Interface(iface = Tameable.class, prefix = "shadow$"))
 public abstract class MixinEntityHorse extends MixinEntityAnimal implements Horse {
 
     @Override
@@ -44,4 +49,10 @@ public abstract class MixinEntityHorse extends MixinEntityAnimal implements Hors
     public DataContainer toContainer() {
         return super.toContainer();
     }
+
+
+    @Shadow(prefix = "shadow$")
+    public abstract void shadow$setOwnerId(String id);
+    @Shadow(prefix = "shadow$")
+    public abstract String shadow$getOwnerId();
 }

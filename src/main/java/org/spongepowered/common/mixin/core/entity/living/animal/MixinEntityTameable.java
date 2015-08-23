@@ -24,18 +24,20 @@
  */
 package org.spongepowered.common.mixin.core.entity.living.animal;
 
-import net.minecraft.entity.passive.EntityOcelot;
-import org.spongepowered.api.data.manipulator.entity.OcelotData;
-import org.spongepowered.api.entity.living.animal.Ocelot;
+import net.minecraft.entity.passive.EntityTameable;
+import org.spongepowered.api.entity.living.animal.Tameable;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.asm.mixin.Implements;
+import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 
 @NonnullByDefault
-@Mixin(EntityOcelot.class)
-public abstract class MixinEntityOcelot extends MixinEntityTameable implements Ocelot {
-
-    @Override
-    public OcelotData getOcelotData() {
-        return getData(OcelotData.class).get();
-    }
+@Mixin(EntityTameable.class)
+@Implements(@Interface(iface = Tameable.class, prefix = "shadow$"))
+public abstract class MixinEntityTameable extends MixinEntityAnimal {
+  @Shadow(prefix = "shadow$")
+  public abstract void shadow$setOwnerId(String id);
+  @Shadow(prefix = "shadow$")
+  public abstract String shadow$getOwnerId();
 }
